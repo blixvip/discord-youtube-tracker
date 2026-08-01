@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple script to run the Discord Meme Fetcher Bot
+Simple script to run Discord YouTuber Tracker
 """
 
 import asyncio
@@ -18,7 +18,7 @@ init(autoreset=True)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 if __name__ == "__main__":
-    print(f"🎭 {f.LIGHTMAGENTA_EX}Starting Discord Meme Fetcher Bot...")
+    print(f"📺 {f.LIGHTMAGENTA_EX}Starting Discord YouTuber Tracker...")
     print(f"{f.RED}Press Ctrl+C to stop the bot")
     print(f"{f.YELLOW}=" * 50)
     

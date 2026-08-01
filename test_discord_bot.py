@@ -49,7 +49,7 @@ class TestMemeBot:
                 assert len(mock_print.call_args_list) > 0
                 # Check if any call contains the expected text
                 all_calls = [str(call) for call in mock_print.call_args_list]
-                assert any("Meme Fetcher Bot" in call or "online" in call for call in all_calls)
+                assert any("Discord YouTuber Tracker" in call or "online" in call for call in all_calls)
     
     @pytest.mark.asyncio
     async def test_close_method(self, bot):
@@ -270,7 +270,7 @@ class TestMemeCommands:
         
         # Check help embed
         embed = mock_context.send.call_args[1]['embed']  # Use keyword argument
-        assert embed.title == "🎭 Meme Fetcher Bot Help"
+        assert embed.title == "📺 Discord YouTuber Tracker Help"
         assert embed.color.value == discord.Color.blue().value
         
         # Check that all commands are listed

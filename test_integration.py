@@ -9,7 +9,7 @@ from config import MAX_MEMES_PER_REQUEST
 
 
 class TestIntegration:
-    """Integration tests for the Discord Meme Fetcher Bot."""
+    """Integration tests for Discord YouTuber Tracker."""
     
     @pytest.fixture
     def mock_reddit_client(self):

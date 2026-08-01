@@ -1,4 +1,4 @@
-# Discord Video Watcher + Meme Bot
+# Discord YouTuber Tracker
 
 A Discord bot that watches YouTube creators, routes new uploads into organized Discord channels, and optionally fetches Reddit memes.
 
@@ -22,8 +22,8 @@ A Discord bot that watches YouTube creators, routes new uploads into organized D
 ## Setup
 
 ```bash
-git clone https://github.com/TonsOfFunn/discord-meme-fetcher-bot.git
-cd discord-meme-fetcher-bot
+git clone https://github.com/wasely/discord-youtuber-tracker.git
+cd discord-youtuber-tracker
 python -m venv .venv
 ```
 

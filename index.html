@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎭 Discord Meme Fetcher Bot 🎭</title>
+    <title>Discord YouTuber Tracker</title>
     <style>
         * {
             margin: 0;
@@ -288,35 +288,35 @@
     <div class="container">
         <div class="hero">
             <div class="title-container">
-                <h1 class="scrolling-title">🎭 Discord Meme Fetcher Bot 🎭</h1>
+                <h1 class="scrolling-title">Discord YouTuber Tracker</h1>
             </div>
-            <p class="subtitle">A powerful Discord bot that fetches memes from Reddit with advanced features and modern design</p>
+            <p class="subtitle">Track YouTube creators and route every new upload into organized Discord channels.</p>
         </div>
         <h2 class=" section-title subtitle" style="text-align: center">Features</h2>
         <div class="features-grid">
             
             <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <h3 class="feature-title">Smart Search</h3>
-                <p class="feature-description">Search for memes using keywords or get random trending memes from popular subreddits with intelligent filtering.</p>
+                <div class="feature-icon">📺</div>
+                <h3 class="feature-title">Creator Tracking</h3>
+                <p class="feature-description">Watch public YouTube creator feeds without requiring a YouTube API key.</p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h3 class="feature-title">Async Performance</h3>
-                <p class="feature-description">Built with async operations for non-blocking performance and smooth user experience.</p>
+                <h3 class="feature-title">Organized Feeds</h3>
+                <p class="feature-description">Route uploads to one everything feed and dedicated channels for each creator.</p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">🛡️</div>
-                <h3 class="feature-title">Robust & Secure</h3>
-                <p class="feature-description">Comprehensive error handling, input validation, and rate limiting for reliable operation.</p>
+                <h3 class="feature-title">Catch-up Checkpoints</h3>
+                <p class="feature-description">Persist the latest video per route and catch up automatically after restarts.</p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">🧪</div>
                 <h3 class="feature-title">Fully Tested</h3>
-                <p class="feature-description">Complete test suite with 78 tests covering unit, integration, and configuration testing.</p>
+                <p class="feature-description">Offline tests cover feeds, routes, embeds, configuration, and optional Reddit commands.</p>
             </div>
         </div>
 
@@ -324,22 +324,22 @@
             <h2 class="section-title subtitle" style="text-align: center">Bot Commands</h2>
             <div class="commands-grid">
                 <div class="command-card">
-                    <div class="command-name">!meme [keyword]</div>
-                    <div class="command-description">Fetch memes by keyword or get trending memes</div>
+                    <div class="command-name">/addchannel &lt;YouTube URL&gt;</div>
+                    <div class="command-description">Create destinations and start tracking a creator</div>
                 </div>
                 
                 <div class="command-card">
-                    <div class="command-name">!random [count]</div>
-                    <div class="command-description">Get random memes (default: 3, max: 10)</div>
+                    <div class="command-name">/channels</div>
+                    <div class="command-description">List creators tracked in the current channel</div>
                 </div>
                 
                 <div class="command-card">
-                    <div class="command-name">!search &lt;keyword&gt; [subreddit] [count]</div>
-                    <div class="command-description">Search memes in specific subreddit</div>
+                    <div class="command-name">/checkchannels</div>
+                    <div class="command-description">Check tracked creators for new uploads now</div>
                 </div>
                 
                 <div class="command-card">
-                    <div class="command-name">!help</div>
+                    <div class="command-name">/help</div>
                     <div class="command-description">Show help information and examples</div>
                 </div>
             </div>
@@ -347,7 +347,7 @@
 
         
             <div style="text-align: center;">
-                <a href="https://github.com/TonsOfFunn/discord-meme-fetcher-bot" class="github-button">
+                <a href="https://github.com/wasely/discord-youtuber-tracker" class="github-button">
                     Get on GitHub
                 </a> 
             </div>
@@ -355,7 +355,7 @@
 
         <div class="footer">
             <p class="footer-text">
-                Made with <span class="heart">❤️</span> by <strong>TonsOfFunn</strong>
+                Discord YouTuber Tracker
             </p>
         </div>
     </div>
@@ -413,4 +413,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

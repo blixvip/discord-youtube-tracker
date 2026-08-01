@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Discord Meme Bot Docker Runner
+# Discord YouTuber Tracker Docker Runner
 # This script helps you run the Discord bot in a Docker container
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🐳 Discord Meme Bot Docker Runner${NC}"
+echo -e "${BLUE}🐳 Discord YouTuber Tracker Docker Runner${NC}"
 echo "=================================="
 
 # Check if Docker is installed
@@ -56,10 +56,10 @@ cleanup() {
 # Set up trap to handle Ctrl+C
 trap cleanup SIGINT
 
-echo -e "${BLUE}🚀 Starting Discord Meme Bot...${NC}"
+echo -e "${BLUE}🚀 Starting Discord YouTuber Tracker...${NC}"
 echo -e "${BLUE}📊 Use 'docker-compose logs -f' to view logs${NC}"
 echo -e "${BLUE}🛑 Press Ctrl+C to stop${NC}"
 echo ""
 
 # Build and run the container
-docker-compose up --build 
+docker-compose up --build

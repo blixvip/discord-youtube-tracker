@@ -1,8 +1,8 @@
 @echo off
-REM Discord Meme Bot Docker Runner for Windows
+REM Discord YouTuber Tracker Docker Runner for Windows
 REM This script helps you run the Discord bot in a Docker container
 
-echo 🐳 Discord Meme Bot Docker Runner
+echo 🐳 Discord YouTuber Tracker Docker Runner
 echo ==================================
 
 REM Check if Docker is installed
@@ -42,7 +42,7 @@ if not exist logs mkdir logs
 
 echo ✅ Environment check passed
 
-echo 🚀 Starting Discord Meme Bot...
+echo 🚀 Starting Discord YouTuber Tracker...
 echo 📊 Use 'docker-compose logs -f' to view logs
 echo 🛑 Press Ctrl+C to stop
 echo.
@@ -52,4 +52,4 @@ docker-compose up --build
 
 echo.
 echo 🛑 Bot stopped. Press any key to exit...
-pause >nul 
+pause >nul

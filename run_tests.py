@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test runner for Discord Meme Fetcher Bot
+Test runner for Discord YouTuber Tracker
 Runs all unit tests and integration tests with proper configuration.
 """
 
@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def run_tests():
     """Run all tests with proper configuration."""
-    print("🧪 Running Discord Meme Fetcher Bot Tests")
+    print("🧪 Running Discord YouTuber Tracker Tests")
     print("=" * 50)
     
     # Test files to run
