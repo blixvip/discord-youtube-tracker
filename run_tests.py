@@ -8,6 +8,9 @@ import sys
 import os
 import pytest
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -95,4 +98,4 @@ def main():
 
 if __name__ == "__main__":
     exit_code = main()
-    sys.exit(exit_code) 
+    sys.exit(exit_code)

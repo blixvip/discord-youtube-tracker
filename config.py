@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(encoding='utf-8-sig')
 
 def get_env_var(key: str, default: Optional[str] = None) -> Optional[str]:
     """Get environment variable with whitespace stripping and validation."""
@@ -25,6 +25,8 @@ REDDIT_USER_AGENT = 'MemeFetcherBot/1.0'
 
 # Bot Settings
 MAX_MEMES_PER_REQUEST = 5
+YOUTUBE_POLL_MINUTES = 5
+SUBSCRIPTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'subscriptions.json')
 DEFAULT_SUBREDDITS = ['memes', 'dankmemes', 'funny', 'me_irl', 'wholesomememes']
 SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.gif']
 
@@ -37,4 +39,4 @@ IMAGE_URL_PATTERNS = [
     'reddit.com/media', 'preview.redd.it', 'i.redd.it',
     # Generic image patterns
     '/image/', '/img/', '/media/'
-] 
+]

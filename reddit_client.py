@@ -1,6 +1,5 @@
 import asyncpraw
 import random
-import time
 import hashlib
 import asyncio
 from typing import List, Dict, Optional
@@ -9,11 +8,12 @@ from config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT, DE
 class RedditMemeFetcher:
     def __init__(self):
         """Initialize Reddit client for meme fetching."""
-        self.reddit = asyncpraw.Reddit(
-            client_id=REDDIT_CLIENT_ID,
-            client_secret=REDDIT_CLIENT_SECRET,
-            user_agent=REDDIT_USER_AGENT
-        )
+        reddit_options = {
+            "client_id": REDDIT_CLIENT_ID,
+            "user_agent": REDDIT_USER_AGENT,
+        }
+        reddit_options["client_secret"] = REDDIT_CLIENT_SECRET
+        self.reddit = asyncpraw.Reddit(**reddit_options)
         # Track used posts to avoid duplicates within a session
         self._used_post_ids = set()
     
@@ -21,12 +21,6 @@ class RedditMemeFetcher:
         """Properly close the Reddit client session."""
         if hasattr(self.reddit, 'close'):
             await self.reddit.close()
-    
-    def _generate_cache_buster(self) -> str:
-        """Generate a unique cache buster based on current time and random data."""
-        timestamp = int(time.time() * 1000)  # Millisecond precision
-        random_salt = random.randint(1000, 9999)
-        return f"{timestamp}_{random_salt}"
     
     def _get_post_id(self, post) -> str:
         """Generate a unique ID for a post to track duplicates."""
@@ -144,11 +138,7 @@ class RedditMemeFetcher:
                         break
                     
                     try:
-                        # Add cache buster to keyword
-                        cache_buster = self._generate_cache_buster()
-                        search_query = f"{keyword} {cache_buster}" if keyword else cache_buster
-                        
-                        search_results = subreddit.search(search_query, sort=search_method, limit=limit * 2)
+                        search_results = subreddit.search(keyword, sort=search_method, limit=limit * 2)
                         
                         async for post in search_results:
                             if len(memes) >= limit * 2:
@@ -308,4 +298,4 @@ class RedditMemeFetcher:
 
     async def async_gen(self, items):
         for item in items:
-            yield item 
+            yield item

@@ -146,10 +146,11 @@ Thumbs.db
 # Log files
 *.log
 logs/
+subscriptions.json
 
 # API keys and tokens (additional protection)
 *_token*
 *_key*
 *_secret*
 *_password*
-*_credential* 
+*_credential*

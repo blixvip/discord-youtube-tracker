@@ -21,9 +21,11 @@ class TestIntegration:
     def bot_with_mock_reddit(self, mock_reddit_client):
         """Create a bot instance with mocked Reddit client."""
         with patch('discord_bot.DISCORD_TOKEN', 'test_token'):
-            with patch('discord_bot.RedditMemeFetcher', return_value=mock_reddit_client):
-                bot = MemeBot()
-                return bot
+            with patch('discord_bot.REDDIT_CLIENT_ID', 'test_client_id'):
+                with patch('discord_bot.REDDIT_CLIENT_SECRET', 'test_client_secret'):
+                    with patch('discord_bot.RedditMemeFetcher', return_value=mock_reddit_client):
+                        bot = MemeBot()
+                        return bot
     
     @pytest.fixture
     def mock_context(self):
@@ -272,4 +274,4 @@ class TestIntegration:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"]) 
+    pytest.main([__file__, "-v"])

@@ -10,6 +10,8 @@ import sys
 import time
 from dotenv import load_dotenv
 
+__test__ = False  # Manual live-API probe, not an offline pytest module.
+
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -166,4 +168,4 @@ async def test_all_commands():
         await client.close()
 
 if __name__ == "__main__":
-    asyncio.run(test_all_commands()) 
+    asyncio.run(test_all_commands())

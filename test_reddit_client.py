@@ -146,9 +146,6 @@ class TestRedditMemeFetcher:
         mock_subreddit.search = MagicMock(return_value=AsyncIterator([mock_post]))
         reddit_client.reddit.subreddit.return_value = mock_subreddit
         
-        # Mock the cache buster generation to return a predictable value
-        reddit_client._generate_cache_buster = MagicMock(return_value="test_cache_buster")
-        
         result = await reddit_client.fetch_memes_by_keyword("test", limit=1)
         
         assert len(result) == 1
@@ -158,6 +155,7 @@ class TestRedditMemeFetcher:
         assert result[0]['subreddit'] == DEFAULT_SUBREDDITS[0]
         assert result[0]['score'] == 100
         assert result[0]['permalink'] == "https://reddit.com/r/test/comments/123/test_meme/"
+        assert all(call.args[0] == "test" for call in mock_subreddit.search.call_args_list)
     
     @pytest.mark.asyncio
     async def test_fetch_memes_by_keyword_empty_result(self, reddit_client):
@@ -165,6 +163,7 @@ class TestRedditMemeFetcher:
         mock_subreddit = AsyncMock()
         mock_subreddit.search = MagicMock(return_value=AsyncIterator([]))
         reddit_client.reddit.subreddit.return_value = mock_subreddit
+        reddit_client.fetch_random_memes = AsyncMock(return_value=[])
         
         result = await reddit_client.fetch_memes_by_keyword("nonexistent", limit=5)
         
@@ -332,4 +331,4 @@ class TestRedditMemeFetcher:
         assert len(result) == 0
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"]) 
+    pytest.main([__file__, "-v"])

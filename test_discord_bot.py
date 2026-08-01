@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch, Mock, PropertyMock
 import discord
 from discord_bot import MemeBot, MemeCommands
 from config import MAX_MEMES_PER_REQUEST
+from youtube_client import VideoSubscription
 
 
 class TestMemeBot:
@@ -300,6 +301,86 @@ class TestMemeCommands:
         
         assert "Author" in field_names
         assert "u/test_user" in field_values
+
+    @pytest.mark.asyncio
+    async def test_create_video_embed_and_button(self, cog):
+        video = {
+            "video_id": "video123",
+            "title": "A useful AI video",
+            "url": "https://www.youtube.com/watch?v=video123",
+            "published": "2026-07-31T12:00:00+00:00",
+            "thumbnail_url": "https://img.example/video123.jpg",
+        }
+        subscription = VideoSubscription(
+            youtube_channel_id="UC1234567890123456789012",
+            youtube_channel_name="Example Creator",
+            discord_channel_id=42,
+            last_video_id="older-video",
+        )
+
+        embed = cog.create_video_embed(video, subscription)
+        view = cog.create_video_view(video)
+
+        assert embed.title == "A useful AI video"
+        assert embed.url == video["url"]
+        assert embed.color.value == 0xFF0000
+        assert embed.image.url == "https://img.example/video123.jpg"
+        assert view.children[0].url == video["url"]
+
+    @pytest.mark.asyncio
+    async def test_add_youtube_channel_routes_to_everything_and_creator(self, cog):
+        context = AsyncMock()
+        context.guild = Mock()
+        context.author.guild_permissions.manage_guild = True
+        context.typing = AsyncMock()
+        context.send = AsyncMock()
+        everything = Mock(id=100, mention="#everything")
+        creator_channel = Mock(id=200, mention="#example-creator")
+        cog._ensure_feed_destinations = AsyncMock(
+            return_value=(everything, creator_channel)
+        )
+        cog.youtube_client.resolve_channel = AsyncMock(
+            return_value={
+                "channel_id": "UC1234567890123456789012",
+                "channel_name": "Example Creator",
+            }
+        )
+        cog.youtube_client.fetch_videos = AsyncMock(
+            return_value=[{"video_id": "video123"}]
+        )
+        cog.subscription_store.add = Mock(return_value=True)
+
+        await cog.add_youtube_channel.callback(
+            cog, context, channel="https://youtube.com/@example"
+        )
+
+        assert cog.subscription_store.add.call_count == 2
+        routed_ids = {
+            call.args[0].discord_channel_id
+            for call in cog.subscription_store.add.call_args_list
+        }
+        assert routed_ids == {100, 200}
+        context.send.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_poll_fetches_each_creator_once_for_multiple_routes(self, cog):
+        subscriptions = [
+            VideoSubscription(
+                "UC1234567890123456789012", "Example Creator", channel_id, "video123"
+            )
+            for channel_id in (100, 200)
+        ]
+        cog.subscription_store.subscriptions = subscriptions
+        cog.youtube_client.fetch_videos = AsyncMock(
+            return_value=[{"video_id": "video123"}]
+        )
+
+        posted = await cog._poll_subscriptions()
+
+        assert posted == 0
+        cog.youtube_client.fetch_videos.assert_awaited_once_with(
+            "UC1234567890123456789012", limit=5
+        )
     
     @pytest.mark.asyncio
     async def test_fetch_meme_multiple_results(self, cog, mock_context):
@@ -367,4 +448,4 @@ class TestMemeCommands:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"]) 
+    pytest.main([__file__, "-v"])
