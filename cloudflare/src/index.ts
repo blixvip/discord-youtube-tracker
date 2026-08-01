@@ -1,4 +1,5 @@
 import { verifyKey } from "discord-interactions";
+import { fetchTranscript, toPlainText, toSRT } from "youtube-transcript-plus";
 
 interface Env {
   DB: D1Database;
@@ -27,6 +28,18 @@ interface Video {
   channelName: string;
 }
 
+interface CaptionBundle {
+  language: string;
+  plainText: string;
+  srtText: string;
+}
+
+interface CaptionRow {
+  language: string;
+  plain_text: string;
+  srt_text: string;
+}
+
 interface DiscordInteraction {
   id: string;
   application_id: string;
@@ -37,14 +50,25 @@ interface DiscordInteraction {
   member?: { permissions?: string };
   data?: {
     name?: string;
+    custom_id?: string;
     options?: Array<{ name: string; value: string }>;
+  };
+  message?: {
+    embeds?: Array<{
+      title?: string;
+      url?: string;
+      author?: { name?: string };
+    }>;
   };
 }
 
 const DISCORD_API = "https://discord.com/api/v10";
+const PRODUCT_NAME = "Discord YouTube Tracker";
 const MANAGE_GUILD = 32n;
 const POLL_BATCH_SIZE = 20;
-const SEND_BATCH_SIZE = 20;
+const SEND_BATCH_SIZE = 8;
+const CAPTION_BUTTON_PREFIX = "captions:";
+const MAX_CACHED_CAPTION_BYTES = 1_800_000;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -105,7 +129,9 @@ async function verifyDiscordRequest(request: Request, publicKey: string, body: A
 async function discordApi(env: Env, path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   headers.set("authorization", `Bot ${env.DISCORD_TOKEN}`);
-  headers.set("content-type", "application/json");
+  if (typeof init.body === "string" && !headers.has("content-type")) {
+    headers.set("content-type", "application/json");
+  }
   const response = await fetch(`${DISCORD_API}${path}`, { ...init, headers });
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 300);
@@ -115,11 +141,140 @@ async function discordApi(env: Env, path: string, init: RequestInit = {}): Promi
 }
 
 async function editInteraction(env: Env, interaction: DiscordInteraction, content: string): Promise<void> {
-  await fetch(`${DISCORD_API}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+  const response = await fetch(`${DISCORD_API}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
   });
+  if (!response.ok) throw new Error(`Discord interaction update returned ${response.status}`);
+}
+
+export function parseCaptionCustomId(customId: string | undefined): string | null {
+  if (!customId?.startsWith(CAPTION_BUTTON_PREFIX)) return null;
+  const videoId = customId.slice(CAPTION_BUTTON_PREFIX.length);
+  return /^[A-Za-z0-9_-]{11}$/.test(videoId) ? videoId : null;
+}
+
+export function safeCaptionBaseName(title: string, videoId: string): string {
+  const safeTitle = title
+    .normalize("NFKD")
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 70);
+  return `${safeTitle || "youtube-captions"}-${videoId}`;
+}
+
+export function formatTranscriptFile(
+  captions: CaptionBundle,
+  metadata: { title: string; channelName: string; url: string; published?: string },
+): string {
+  return [
+    `Title: ${metadata.title}`,
+    `Channel: ${metadata.channelName}`,
+    `Video URL: ${metadata.url}`,
+    `Published: ${metadata.published || "Unknown"}`,
+    `Caption language: ${captions.language}`,
+    "",
+    "---",
+    "",
+    captions.plainText,
+    "",
+  ].join("\n");
+}
+
+function captionComponents(videoId: string): Array<Record<string, unknown>> {
+  return [{
+    type: 1,
+    components: [
+      { type: 2, style: 5, label: "Watch on YouTube", url: `https://www.youtube.com/watch?v=${videoId}` },
+      { type: 2, style: 1, label: "Download captions", custom_id: `${CAPTION_BUTTON_PREFIX}${videoId}` },
+    ],
+  }];
+}
+
+function captionFiles(
+  captions: CaptionBundle,
+  metadata: { title: string; channelName: string; url: string; published?: string },
+): Array<{ name: string; content: string }> {
+  const baseName = safeCaptionBaseName(metadata.title, metadata.url.match(/[?&]v=([^&]+)/)?.[1] ?? "captions");
+  return [
+    { name: `${baseName}.txt`, content: formatTranscriptFile(captions, metadata) },
+    { name: `${baseName}.srt`, content: captions.srtText },
+  ];
+}
+
+function multipartMessage(payload: Record<string, unknown>, files: Array<{ name: string; content: string }>): FormData {
+  const form = new FormData();
+  form.append("payload_json", JSON.stringify({
+    ...payload,
+    attachments: files.map((file, id) => ({ id, filename: file.name })),
+  }));
+  files.forEach((file, id) => {
+    form.append(`files[${id}]`, new Blob([file.content], { type: "text/plain;charset=utf-8" }), file.name);
+  });
+  return form;
+}
+
+async function ensureCaptionTable(env: Env): Promise<void> {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS captions (
+      video_id TEXT PRIMARY KEY,
+      language TEXT NOT NULL,
+      plain_text TEXT NOT NULL,
+      srt_text TEXT NOT NULL,
+      fetched_at TEXT NOT NULL
+    )
+  `).run();
+}
+
+async function getCaptions(env: Env, videoId: string): Promise<CaptionBundle> {
+  await ensureCaptionTable(env);
+  const cached = await env.DB.prepare(
+    "SELECT language, plain_text, srt_text FROM captions WHERE video_id = ?",
+  ).bind(videoId).first<CaptionRow>();
+  if (cached) {
+    return { language: cached.language, plainText: cached.plain_text, srtText: cached.srt_text };
+  }
+
+  const segments = await fetchTranscript(videoId, { retries: 2, retryDelay: 500 });
+  if (!segments.length) throw new Error("Captions are not available yet.");
+  const captions = {
+    language: segments[0]?.lang || "unknown",
+    plainText: toPlainText(segments, "\n").trim(),
+    srtText: toSRT(segments).trim(),
+  };
+  const byteLength = new TextEncoder().encode(captions.plainText + captions.srtText).byteLength;
+  if (byteLength <= MAX_CACHED_CAPTION_BYTES) {
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO captions (video_id, language, plain_text, srt_text, fetched_at)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).bind(videoId, captions.language, captions.plainText, captions.srtText, new Date().toISOString()).run();
+  }
+  return captions;
+}
+
+async function sendCaptionDownload(env: Env, interaction: DiscordInteraction, videoId: string): Promise<void> {
+  try {
+    const captions = await getCaptions(env, videoId);
+    const embed = interaction.message?.embeds?.[0];
+    const metadata = {
+      title: embed?.title || `YouTube video ${videoId}`,
+      channelName: embed?.author?.name || "Unknown channel",
+      url: embed?.url || `https://www.youtube.com/watch?v=${videoId}`,
+    };
+    const files = captionFiles(captions, metadata);
+    const response = await fetch(`${DISCORD_API}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+      method: "PATCH",
+      body: multipartMessage({
+        content: "Full captions ready in readable `.txt` and timestamped `.srt` formats.",
+        flags: 64,
+        allowed_mentions: { parse: [] },
+      }, files),
+    });
+    if (!response.ok) throw new Error(`Discord file upload returned ${response.status}`);
+  } catch (error) {
+    await editInteraction(env, interaction, `Captions are not available yet. Try again later. (${error instanceof Error ? error.message : String(error)})`.slice(0, 1900));
+  }
 }
 
 async function fetchFeed(channelId: string): Promise<Video[]> {
@@ -285,22 +440,38 @@ async function sendPending(env: Env): Promise<number> {
   let sent = 0;
   for (const post of pending.results) {
     try {
+      let captions: CaptionBundle | null = null;
+      try {
+        captions = await getCaptions(env, String(post.video_id));
+      } catch (error) {
+        console.warn(`Captions not ready for ${post.video_id}`, error);
+      }
+      const metadata = {
+        title: String(post.title),
+        channelName: String(post.youtube_channel_name),
+        url: String(post.url),
+        published: post.published ? String(post.published) : undefined,
+      };
+      const payload = {
+        embeds: [{
+          title: String(post.title).slice(0, 256),
+          url: post.url,
+          description: captions
+            ? "New YouTube upload — full captions attached"
+            : "New YouTube upload — captions may still be processing",
+          color: 0xff0000,
+          timestamp: post.published || undefined,
+          author: { name: post.youtube_channel_name, url: `https://youtube.com/channel/${post.youtube_channel_id}` },
+          image: { url: post.thumbnail_url },
+          footer: { text: `${PRODUCT_NAME} • New video` },
+        }],
+        components: captionComponents(String(post.video_id)),
+        allowed_mentions: { parse: [] },
+      };
+      const files = captions ? captionFiles(captions, metadata) : [];
       await discordApi(env, `/channels/${post.discord_channel_id}/messages`, {
         method: "POST",
-        body: JSON.stringify({
-          embeds: [{
-            title: String(post.title).slice(0, 256),
-            url: post.url,
-            description: "New YouTube upload",
-            color: 0xff0000,
-            timestamp: post.published || undefined,
-            author: { name: post.youtube_channel_name, url: `https://youtube.com/channel/${post.youtube_channel_id}` },
-            image: { url: post.thumbnail_url },
-            footer: { text: "YouTube • New video" },
-          }],
-          components: [{ type: 1, components: [{ type: 2, style: 5, label: "Watch on YouTube", url: post.url }] }],
-          allowed_mentions: { parse: [] },
-        }),
+        body: files.length ? multipartMessage(payload, files) : JSON.stringify(payload),
       });
       await env.DB.prepare("DELETE FROM pending_posts WHERE id = ?").bind(post.id).run();
       sent += 1;
@@ -344,14 +515,20 @@ export async function runPoll(env: Env): Promise<number> {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContextLike): Promise<Response> {
     if (request.method === "GET") {
-      return new Response("Discord YouTuber Tracker is running.");
+      return new Response(`${PRODUCT_NAME} is running.`);
     }
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
     const body = await request.arrayBuffer();
     if (!(await verifyDiscordRequest(request, env.DISCORD_PUBLIC_KEY, body))) return new Response("Invalid signature", { status: 401 });
     const interaction = JSON.parse(new TextDecoder().decode(body)) as DiscordInteraction;
     if (interaction.type === 1) return json({ type: 1 });
-    if (interaction.type !== 2) return json({ type: 4, data: { content: "Unsupported interaction." } });
+    if (interaction.type === 3) {
+      const videoId = parseCaptionCustomId(interaction.data?.custom_id);
+      if (!videoId) return json({ type: 4, data: { content: "Unknown caption action.", flags: 64 } });
+      ctx.waitUntil(sendCaptionDownload(env, interaction, videoId));
+      return json({ type: 5, data: { flags: 64 } });
+    }
+    if (interaction.type !== 2) return json({ type: 4, data: { content: "Unsupported interaction.", flags: 64 } });
     ctx.waitUntil(handleInteraction(env, interaction));
     return json({ type: 5, data: { flags: 64 } });
   },

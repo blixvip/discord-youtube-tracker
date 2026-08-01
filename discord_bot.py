@@ -64,7 +64,7 @@ class MemeBot(commands.Bot):
         )
 
     async def on_ready(self):
-        print(f"📺 {f.GREEN}Discord YouTuber Tracker is online!")
+        print(f"📺 {f.GREEN}Discord YouTube Tracker is online!")
         if self.user:
             print(f"Bot ID: {self.user.id}")
         if not self._commands_synced:
@@ -251,7 +251,7 @@ class MemeCommands(commands.Cog):
     @commands.hybrid_command(name="help", aliases=["h"])
     async def help_command(self, ctx):
         embed = discord.Embed(
-            title="📺 Discord YouTuber Tracker Help",
+            title="📺 Discord YouTube Tracker Help",
             description="Watches YouTube channels and posts new uploads.",
             color=discord.Color.blue(),
         )

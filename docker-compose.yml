@@ -1,7 +1,7 @@
 services:
   discord-bot:
     build: .
-    container_name: discord-youtuber-tracker
+    container_name: discord-youtube-tracker
     restart: unless-stopped
     environment:
       # Discord Bot Token

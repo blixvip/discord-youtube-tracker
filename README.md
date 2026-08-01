@@ -1,4 +1,4 @@
-# Discord YouTuber Tracker
+# Discord YouTube Tracker
 
 A Discord bot that watches YouTube creators, routes new uploads into organized Discord channels, and optionally fetches Reddit memes.
 
@@ -9,6 +9,10 @@ A Discord bot that watches YouTube creators, routes new uploads into organized D
 - Routes every upload to both `everything` and the matching creator channel.
 - Polls creators in rotating batches every five minutes, even with multiple Discord destinations.
 - Posts linked embeds with the creator, publish time, thumbnail, and YouTube button.
+- Fetches complete public/manual or auto-generated captions when each upload appears.
+- Attaches captions immediately as readable `.txt` and timestamped `.srt` files.
+- Adds a **Download captions** button so the files can be retrieved later from any Discord device.
+- Caches successful transcripts in D1 so repeat downloads do not refetch YouTube.
 - Persists checkpoints in a local `subscriptions.json` file to catch up after restarts.
 - Keeps Reddit meme commands available when Reddit credentials are configured.
 
@@ -16,14 +20,14 @@ A Discord bot that watches YouTube creators, routes new uploads into organized D
 
 - Python 3.11+
 - A Discord application and bot token
-- Bot permissions: View Channels, Send Messages, Embed Links, Read Message History, Manage Channels, and Use Application Commands
+- Bot permissions: View Channels, Send Messages, Embed Links, Attach Files, Read Message History, Manage Channels, and Use Application Commands
 - Reddit API credentials only if meme commands are needed
 
 ## Setup
 
 ```bash
-git clone https://github.com/wasely/discord-youtuber-tracker.git
-cd discord-youtuber-tracker
+git clone https://github.com/wasely/discord-youtube-tracker.git
+cd discord-youtube-tracker
 python -m venv .venv
 ```
 
@@ -60,8 +64,9 @@ docker compose up --build -d
 ## Free 24/7 cloud deployment
 
 The `cloudflare/` app is the always-on deployment. It uses a Cloudflare Worker,
-a five-minute Cron Trigger, and D1 for persistent routes, checkpoints, and a
-restart-safe pending-post queue. It needs no open browser or home computer.
+a five-minute Cron Trigger, and D1 for persistent routes, checkpoints, cached
+captions, and a restart-safe pending-post queue. It needs no open browser or
+home computer.
 
 ```bash
 cd cloudflare
@@ -76,6 +81,10 @@ npx wrangler secret put DISCORD_PUBLIC_KEY
 npm run deploy
 ```
 
+The product is named **Discord YouTube Tracker**. Existing Cloudflare Worker and
+D1 resource IDs keep their original `discord-youtuber-tracker` slug so current
+Discord secrets, routes, and checkpoints survive the rename.
+
 Set the deployed Worker URL as the Discord application's Interactions Endpoint
 URL. To migrate existing routes without committing private Discord IDs:
 
@@ -86,6 +95,11 @@ npx wrangler d1 execute discord-youtuber-tracker --remote --file .seed.sql
 
 The current public deployment tracks 50 creators through 100 routes. Cloudflare
 secrets, `.seed.sql`, and local Worker state are excluded from Git.
+
+When captions exist at detection time, both files are attached to the upload
+notification. If YouTube is still generating captions, the notification still
+posts and **Download captions** retries on demand. Videos with captions disabled
+cannot provide a transcript.
 
 ## Commands
 

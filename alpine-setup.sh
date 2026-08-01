@@ -44,12 +44,12 @@ mkdir -p /opt/discord-bot
 cd /opt/discord-bot
 
 # Step 6: Clone repository (if not already present)
-if [ ! -d "discord-youtuber-tracker" ]; then
+if [ ! -d "discord-youtube-tracker" ]; then
     echo -e "${BLUE}📥 Cloning repository...${NC}"
-    git clone https://github.com/wasely/discord-youtuber-tracker.git
+    git clone https://github.com/wasely/discord-youtube-tracker.git
 fi
 
-cd discord-youtuber-tracker
+cd discord-youtube-tracker
 
 # Step 7: Set up environment file
 echo -e "${BLUE}⚙️  Setting up environment configuration...${NC}"
@@ -108,5 +108,5 @@ echo -e "  Stop bot:  ${GREEN}docker-compose down${NC}"
 echo -e "  Restart:   ${GREEN}docker-compose restart${NC}"
 echo -e "  Status:    ${GREEN}docker-compose ps${NC}"
 echo ""
-echo -e "${BLUE}📁 Project location: ${GREEN}/opt/discord-bot/discord-youtuber-tracker${NC}"
-echo -e "${BLUE}📝 Edit config:      ${GREEN}nano /opt/discord-bot/discord-youtuber-tracker/.env${NC}"
+echo -e "${BLUE}📁 Project location: ${GREEN}/opt/discord-bot/discord-youtube-tracker${NC}"
+echo -e "${BLUE}📝 Edit config:      ${GREEN}nano /opt/discord-bot/discord-youtube-tracker/.env${NC}"

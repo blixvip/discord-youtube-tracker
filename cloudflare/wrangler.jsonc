@@ -3,6 +3,7 @@
   "name": "discord-youtuber-tracker",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-31",
+  "compatibility_flags": ["nodejs_compat"],
   "triggers": {
     "crons": ["*/5 * * * *"]
   },
