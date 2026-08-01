@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "discord-youtuber-tracker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-31",
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "discord-youtuber-tracker",
+      "database_id": "86a598ff-0d94-43fb-9c71-569291fbdc7b",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

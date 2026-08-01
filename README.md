@@ -7,7 +7,7 @@ A Discord bot that watches YouTube creators, routes new uploads into organized D
 - Watches public YouTube Atom feeds without a YouTube API key.
 - Creates an `AI Video Feeds` category, an `everything` channel, and a channel for each creator.
 - Routes every upload to both `everything` and the matching creator channel.
-- Polls each creator once every five minutes, even with multiple Discord destinations.
+- Polls creators in rotating batches every five minutes, even with multiple Discord destinations.
 - Posts linked embeds with the creator, publish time, thumbnail, and YouTube button.
 - Persists checkpoints in a local `subscriptions.json` file to catch up after restarts.
 - Keeps Reddit meme commands available when Reddit credentials are configured.
@@ -57,20 +57,35 @@ Docker files are included for containerized operation:
 docker compose up --build -d
 ```
 
-## Free cloud deployment
+## Free 24/7 cloud deployment
 
-Northflank's free Developer Sandbox can run this bot continuously from the public
-GitHub repository. Create a combined service from the Dockerfile with no public
-ports, then:
+The `cloudflare/` app is the always-on deployment. It uses a Cloudflare Worker,
+a five-minute Cron Trigger, and D1 for persistent routes, checkpoints, and a
+restart-safe pending-post queue. It needs no open browser or home computer.
 
-1. Add `DISCORD_TOKEN` as a secret runtime variable.
-2. Attach a persistent volume at `/app/data`.
-3. Set `SUBSCRIPTIONS_SEED_B64` once to migrate an existing local
-   `subscriptions.json`; it is used only when the volume is empty.
-4. Keep one service instance. Pause or resume it from the service header.
+```bash
+cd cloudflare
+npm ci
+npx wrangler login
+npx wrangler d1 create discord-youtuber-tracker
+# Copy the returned database_id into wrangler.jsonc.
+npx wrangler d1 migrations apply discord-youtuber-tracker --remote
+npx wrangler secret put DISCORD_TOKEN
+npx wrangler secret put DISCORD_APPLICATION_ID
+npx wrangler secret put DISCORD_PUBLIC_KEY
+npm run deploy
+```
 
-The image writes checkpoints to `/app/data/subscriptions.json`. Never commit the
-token, seed, or runtime data.
+Set the deployed Worker URL as the Discord application's Interactions Endpoint
+URL. To migrate existing routes without committing private Discord IDs:
+
+```bash
+python scripts/make_seed.py ../subscriptions.json .seed.sql
+npx wrangler d1 execute discord-youtuber-tracker --remote --file .seed.sql
+```
+
+The current public deployment tracks 50 creators through 100 routes. Cloudflare
+secrets, `.seed.sql`, and local Worker state are excluded from Git.
 
 ## Commands
 

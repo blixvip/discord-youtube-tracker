@@ -147,6 +147,10 @@ Thumbs.db
 *.log
 logs/
 data/
+cloudflare/.dev.vars
+cloudflare/.wrangler/
+cloudflare/.seed.sql
+cloudflare/node_modules/
 subscriptions.json
 
 # API keys and tokens (additional protection)
