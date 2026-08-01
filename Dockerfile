@@ -20,8 +20,11 @@ COPY . .
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash bot && \
+    mkdir -p /app/data && \
     chown -R bot:bot /app
-USER bot
+USER bot:bot
+
+ENV SUBSCRIPTIONS_FILE=/app/data/subscriptions.json
 
 # Run the bot
-CMD ["python", "run.py"] 
+CMD ["python", "run.py"]

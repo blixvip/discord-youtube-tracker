@@ -146,6 +146,7 @@ Thumbs.db
 # Log files
 *.log
 logs/
+data/
 subscriptions.json
 
 # API keys and tokens (additional protection)

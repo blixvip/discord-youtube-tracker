@@ -1,3 +1,5 @@
+import base64
+import json
 from unittest.mock import AsyncMock
 
 import pytest
@@ -86,3 +88,28 @@ def test_subscription_store_persists_and_deduplicates(tmp_path):
     assert reloaded.subscriptions == [subscription]
     assert reloaded.remove(subscription.youtube_channel_id, 42) is True
     assert reloaded.remove(subscription.youtube_channel_id, 42) is False
+
+
+def test_subscription_store_seeds_missing_cloud_state_once(tmp_path):
+    path = tmp_path / "data" / "subscriptions.json"
+    payload = {
+        "subscriptions": [
+            {
+                "youtube_channel_id": "UC1234567890123456789012",
+                "youtube_channel_name": "Example Channel",
+                "discord_channel_id": 42,
+                "last_video_id": "video123",
+            }
+        ]
+    }
+    seed = base64.b64encode(json.dumps(payload).encode("utf-8")).decode("ascii")
+
+    seeded = SubscriptionStore(str(path), seed_b64=seed)
+    assert seeded.subscriptions[0].last_video_id == "video123"
+    assert path.exists()
+
+    replacement_seed = base64.b64encode(
+        json.dumps({"subscriptions": []}).encode("utf-8")
+    ).decode("ascii")
+    reloaded = SubscriptionStore(str(path), seed_b64=replacement_seed)
+    assert len(reloaded.subscriptions) == 1

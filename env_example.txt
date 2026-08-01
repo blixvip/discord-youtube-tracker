@@ -1,8 +1,11 @@
 # Discord Bot Configuration
 # Get your Discord bot token from: https://discord.com/developers/applications
 DISCORD_TOKEN=your_discord_bot_token_here
- 
+SUBSCRIPTIONS_FILE=./subscriptions.json
+# Optional base64 JSON seed used only when SUBSCRIPTIONS_FILE does not exist
+SUBSCRIPTIONS_SEED_B64=
+
 # Reddit API Configuration
 # Get your Reddit API credentials from: https://www.reddit.com/prefs/apps
 REDDIT_CLIENT_ID=your_reddit_client_id_here
-REDDIT_CLIENT_SECRET=your_reddit_client_secret_here 
+REDDIT_CLIENT_SECRET=your_reddit_client_secret_here

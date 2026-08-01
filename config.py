@@ -26,7 +26,11 @@ REDDIT_USER_AGENT = 'MemeFetcherBot/1.0'
 # Bot Settings
 MAX_MEMES_PER_REQUEST = 5
 YOUTUBE_POLL_MINUTES = 5
-SUBSCRIPTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'subscriptions.json')
+SUBSCRIPTIONS_FILE = get_env_var(
+    'SUBSCRIPTIONS_FILE',
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'subscriptions.json'),
+)
+SUBSCRIPTIONS_SEED_B64 = get_env_var('SUBSCRIPTIONS_SEED_B64')
 DEFAULT_SUBREDDITS = ['memes', 'dankmemes', 'funny', 'me_irl', 'wholesomememes']
 SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.gif']
 

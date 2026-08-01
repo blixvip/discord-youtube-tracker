@@ -17,6 +17,7 @@ from config import (
     REDDIT_CLIENT_ID,
     REDDIT_CLIENT_SECRET,
     SUBSCRIPTIONS_FILE,
+    SUBSCRIPTIONS_SEED_B64,
     YOUTUBE_POLL_MINUTES,
 )
 from reddit_client import RedditMemeFetcher
@@ -43,13 +44,19 @@ class MemeBot(commands.Bot):
             else None
         )
         self.youtube_client = YouTubeFeedClient()
-        self.subscription_store = SubscriptionStore(SUBSCRIPTIONS_FILE)
+        self.subscription_store = SubscriptionStore(
+            SUBSCRIPTIONS_FILE, seed_b64=SUBSCRIPTIONS_SEED_B64
+        )
         self._shutdown_requested = False
         self._commands_synced = False
 
     async def setup_hook(self):
         await self.add_cog(MemeCommands(self))
         print(f"{f.CYAN}Bot commands and video watcher loaded")
+        print(
+            f"Loaded {len(self.subscription_store.subscriptions)} "
+            "YouTube routes"
+        )
 
     async def on_ready(self):
         print(f"📺 {f.GREEN}Discord YouTuber Tracker is online!")
@@ -515,7 +522,8 @@ class MemeCommands(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def poll_youtube_channels(self):
-        await self._poll_subscriptions()
+        posted = await self._poll_subscriptions()
+        print(f"YouTube poll complete: {posted} new video(s)")
 
     @poll_youtube_channels.before_loop
     async def before_youtube_poll(self):

@@ -37,6 +37,8 @@ Copy `env_example.txt` to `.env` and fill in the required token:
 
 ```env
 DISCORD_TOKEN=your_discord_bot_token_here
+SUBSCRIPTIONS_FILE=./subscriptions.json
+SUBSCRIPTIONS_SEED_B64=
 REDDIT_CLIENT_ID=
 REDDIT_CLIENT_SECRET=
 ```
@@ -54,6 +56,21 @@ Docker files are included for containerized operation:
 ```bash
 docker compose up --build -d
 ```
+
+## Free cloud deployment
+
+Northflank's free Developer Sandbox can run this bot continuously from the public
+GitHub repository. Create a combined service from the Dockerfile with no public
+ports, then:
+
+1. Add `DISCORD_TOKEN` as a secret runtime variable.
+2. Attach a persistent volume at `/app/data`.
+3. Set `SUBSCRIPTIONS_SEED_B64` once to migrate an existing local
+   `subscriptions.json`; it is used only when the volume is empty.
+4. Keep one service instance. Pause or resume it from the service header.
+
+The image writes checkpoints to `/app/data/subscriptions.json`. Never commit the
+token, seed, or runtime data.
 
 ## Commands
 

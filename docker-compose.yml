@@ -16,6 +16,8 @@ services:
       - CACHE_DURATION=${CACHE_DURATION:-300}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
+      # Persist YouTube routes and checkpoints across restarts
+      - ./data:/app/data
       # Mount logs directory
       - ./logs:/app/logs
     networks:

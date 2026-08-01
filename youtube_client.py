@@ -1,3 +1,4 @@
+import base64
 import html
 import json
 import os
@@ -25,13 +26,33 @@ class VideoSubscription:
 class SubscriptionStore:
     """Small JSON store for YouTube-to-Discord subscriptions."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, seed_b64: Optional[str] = None):
         self.path = Path(path)
+        self.seed_b64 = seed_b64
         self.subscriptions: List[VideoSubscription] = []
         self.load()
 
     def load(self) -> None:
         if not self.path.exists():
+            if self.seed_b64:
+                try:
+                    decoded = base64.b64decode(self.seed_b64, validate=True).decode(
+                        "utf-8"
+                    )
+                    payload = json.loads(decoded)
+                    self.subscriptions = [
+                        VideoSubscription(**item)
+                        for item in payload.get("subscriptions", [])
+                    ]
+                    self.save()
+                except (
+                    OSError,
+                    UnicodeDecodeError,
+                    ValueError,
+                    json.JSONDecodeError,
+                    TypeError,
+                ):
+                    self.subscriptions = []
             return
         try:
             payload = json.loads(self.path.read_text(encoding="utf-8"))
