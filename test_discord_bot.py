@@ -381,6 +381,41 @@ class TestMemeCommands:
         cog.youtube_client.fetch_videos.assert_awaited_once_with(
             "UC1234567890123456789012", limit=5
         )
+
+    def test_extracts_video_ids_from_discord_message(self, cog):
+        message = Mock(
+            content="Backup: https://youtu.be/abcdefghijk",
+            embeds=[Mock(url="https://www.youtube.com/watch?v=lmnopqrstuv")],
+        )
+
+        assert cog._video_ids_from_message(message) == {
+            "abcdefghijk",
+            "lmnopqrstuv",
+        }
+
+    @pytest.mark.asyncio
+    async def test_startup_history_checkpoint_prevents_repost(self, cog):
+        subscription = VideoSubscription(
+            "UC1234567890123456789012",
+            "Example Creator",
+            100,
+            "oldvideo123",
+        )
+        cog.subscription_store.subscriptions = [subscription]
+        cog.subscription_store.save = Mock()
+        cog._startup_seen_video_ids = {100: {"newvideo123"}}
+        cog.youtube_client.fetch_videos = AsyncMock(
+            return_value=[
+                {"video_id": "newvideo123"},
+                {"video_id": "oldvideo123"},
+            ]
+        )
+
+        posted = await cog._poll_subscriptions()
+
+        assert posted == 0
+        assert subscription.last_video_id == "newvideo123"
+        cog.subscription_store.save.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_fetch_meme_multiple_results(self, cog, mock_context):

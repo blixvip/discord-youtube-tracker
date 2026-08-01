@@ -25,6 +25,11 @@ from youtube_client import SubscriptionStore, VideoSubscription, YouTubeFeedClie
 
 init(autoreset=True)
 
+YOUTUBE_VIDEO_ID_PATTERN = re.compile(
+    r"(?:youtube\.com/(?:watch\?v=|shorts/|live/)|youtu\.be/)"
+    r"([A-Za-z0-9_-]{11})"
+)
+
 
 class MemeBot(commands.Bot):
     def __init__(self):
@@ -104,6 +109,8 @@ class MemeCommands(commands.Cog):
         self.youtube_client = bot.youtube_client
         self.subscription_store = bot.subscription_store
         self._poll_lock = asyncio.Lock()
+        self._startup_seen_video_ids = {}
+        self._startup_reconciled_routes = set()
 
     async def cog_load(self):
         self.poll_youtube_channels.change_interval(minutes=YOUTUBE_POLL_MINUTES)
@@ -452,6 +459,38 @@ class MemeCommands(commands.Cog):
         )
         return view
 
+    @staticmethod
+    def _video_ids_from_message(message) -> set[str]:
+        text = getattr(message, "content", "") or ""
+        for embed in getattr(message, "embeds", ()):
+            text += f"\n{getattr(embed, 'url', '') or ''}"
+        return set(YOUTUBE_VIDEO_ID_PATTERN.findall(text))
+
+    async def _load_recent_posted_video_ids(self) -> None:
+        channel_ids = {
+            item.discord_channel_id
+            for item in self.subscription_store.subscriptions
+        }
+        for channel_id in channel_ids:
+            try:
+                target = self.bot.get_channel(channel_id)
+                if target is None:
+                    target = await self.bot.fetch_channel(channel_id)
+                limit = (
+                    1000
+                    if getattr(target, "name", "").casefold() == "everything"
+                    else 100
+                )
+                seen = set()
+                async for message in target.history(limit=limit):
+                    seen.update(self._video_ids_from_message(message))
+                self._startup_seen_video_ids[channel_id] = seen
+            except Exception as e:
+                print(f"Could not read Discord history for a feed channel: {e}")
+
+        seen_count = sum(len(ids) for ids in self._startup_seen_video_ids.values())
+        print(f"Recovered {seen_count} posted video checkpoint(s) from Discord")
+
     async def _poll_subscriptions(
         self, discord_channel_id: Optional[int] = None
     ) -> int:
@@ -482,6 +521,38 @@ class MemeCommands(commands.Cog):
                         continue
                     changed = False
                     for subscription in routes:
+                        route_key = (
+                            subscription.youtube_channel_id,
+                            subscription.discord_channel_id,
+                        )
+                        if route_key not in self._startup_reconciled_routes:
+                            seen = self._startup_seen_video_ids.get(
+                                subscription.discord_channel_id, set()
+                            )
+                            current_index = next(
+                                (
+                                    index
+                                    for index, video in enumerate(videos)
+                                    if video["video_id"]
+                                    == subscription.last_video_id
+                                ),
+                                len(videos),
+                            )
+                            seen_index = next(
+                                (
+                                    index
+                                    for index, video in enumerate(videos)
+                                    if video["video_id"] in seen
+                                ),
+                                None,
+                            )
+                            if seen_index is not None and seen_index < current_index:
+                                subscription.last_video_id = videos[seen_index][
+                                    "video_id"
+                                ]
+                                changed = True
+                            self._startup_reconciled_routes.add(route_key)
+
                         if not subscription.last_video_id:
                             subscription.last_video_id = videos[0]["video_id"]
                             changed = True
@@ -528,6 +599,7 @@ class MemeCommands(commands.Cog):
     @poll_youtube_channels.before_loop
     async def before_youtube_poll(self):
         await self.bot.wait_until_ready()
+        await self._load_recent_posted_video_ids()
 
     def create_meme_embed(
         self, meme: dict, title: str, current: int, total: int
