@@ -1,9 +1,16 @@
 # Discord Bot Configuration
 # Get your Discord bot token from: https://discord.com/developers/applications
 DISCORD_TOKEN=your_discord_bot_token_here
+# Optional dedicated HMAC secret; set the same Cloudflare Worker secret.
+# Falls back to DISCORD_TOKEN only for backward compatibility.
+CAPTION_INGEST_SECRET=replace_with_a_long_random_secret
+CAPTION_CACHE_URL=https://discord-youtube-transcripts.kaiguy432.workers.dev/caption-cache
+GEMINI_API_KEY=
 SUBSCRIPTIONS_FILE=./subscriptions.json
 # Optional base64 JSON seed used only when SUBSCRIPTIONS_FILE does not exist
 SUBSCRIPTIONS_SEED_B64=
+# Set true only when this Python bot, rather than Cloudflare, should poll feeds.
+LOCAL_FEED_POLLING=false
 
 # Reddit API Configuration
 # Get your Reddit API credentials from: https://www.reddit.com/prefs/apps

@@ -5,6 +5,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "vitest run",
+    "register-commands": "node scripts/register_commands.mjs",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
@@ -15,7 +16,6 @@
     "wrangler": "^4.27.0"
   },
   "dependencies": {
-    "discord-interactions": "^4.4.0",
-    "youtube-transcript-plus": "^2.0.1"
+    "discord-interactions": "^4.4.0"
   }
 }

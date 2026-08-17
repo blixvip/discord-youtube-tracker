@@ -4,6 +4,7 @@ test_results.txt
 # Environment and configuration files
 .env
 .env.*
+!.env.example
 config.ini
 settings.py
 secrets.json
@@ -145,8 +146,10 @@ Thumbs.db
 
 # Log files
 *.log
+*.pid
 logs/
 data/
+.wrangler/
 cloudflare/.dev.vars
 cloudflare/.wrangler/
 cloudflare/.seed.sql
@@ -159,3 +162,4 @@ subscriptions.json
 *_secret*
 *_password*
 *_credential*
+!.env.example

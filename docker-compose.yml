@@ -6,6 +6,10 @@ services:
     environment:
       # Discord Bot Token
       - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - CAPTION_INGEST_SECRET=${CAPTION_INGEST_SECRET:-}
+      - CAPTION_CACHE_URL=${CAPTION_CACHE_URL:-https://discord-youtube-transcripts.kaiguy432.workers.dev/caption-cache}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - LOCAL_FEED_POLLING=${LOCAL_FEED_POLLING:-false}
       # Reddit API Credentials
       - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
       - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}

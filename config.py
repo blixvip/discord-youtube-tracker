@@ -3,6 +3,9 @@ from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv(encoding='utf-8-sig')
+# Kept separately so an operator can add AI access without rewriting an
+# existing local Discord credential file.
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env.gemini'), encoding='utf-8-sig')
 
 def get_env_var(key: str, default: Optional[str] = None) -> Optional[str]:
     """Get environment variable with whitespace stripping and validation."""
@@ -16,6 +19,7 @@ def get_env_var(key: str, default: Optional[str] = None) -> Optional[str]:
 
 # Discord Bot Configuration
 DISCORD_TOKEN = get_env_var('DISCORD_TOKEN')
+CAPTION_INGEST_SECRET = get_env_var('CAPTION_INGEST_SECRET') or DISCORD_TOKEN
 DISCORD_PREFIX = '!'
 
 # Reddit API Configuration
@@ -26,6 +30,14 @@ REDDIT_USER_AGENT = 'MemeFetcherBot/1.0'
 # Bot Settings
 MAX_MEMES_PER_REQUEST = 5
 YOUTUBE_POLL_MINUTES = 5
+LOCAL_FEED_POLLING = get_env_var('LOCAL_FEED_POLLING', 'false').lower() == 'true'
+CAPTION_CACHE_URL = get_env_var(
+    'CAPTION_CACHE_URL',
+    'https://discord-youtube-transcripts.kaiguy432.workers.dev/caption-cache',
+)
+GEMINI_API_KEY = get_env_var('GEMINI_API_KEY')
+GEMINI_MODEL = 'gemini-3.6-flash'
+GEMINI_FALLBACK_MODEL = 'gemini-3.5-flash'
 SUBSCRIPTIONS_FILE = get_env_var(
     'SUBSCRIPTIONS_FILE',
     os.path.join(os.path.dirname(os.path.abspath(__file__)), 'subscriptions.json'),

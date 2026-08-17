@@ -13,6 +13,7 @@ env
 pip-log.txt
 pip-delete-this-directory.txt
 .tox
+.venv/
 .coverage
 .coverage.*
 .cache
@@ -71,8 +72,16 @@ docker-compose.yml
 # Logs
 logs/
 *.log
+*.pid
+
+# Local runtime state
+subscriptions.json
+.wrangler/
+node_modules/
+cloudflare/.wrangler/
+cloudflare/node_modules/
 
 # Environment files (will be passed as env vars)
 .env
 .env.local
-env_example.txt 
+env_example.txt

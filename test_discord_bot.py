@@ -1,9 +1,16 @@
 import pytest
 from unittest.mock import AsyncMock, patch, Mock, PropertyMock
 import discord
-from discord_bot import MemeBot, MemeCommands
+from discord_bot import (
+    MemeBot,
+    MemeCommands,
+    _link_timestamps,
+    _summary_sections,
+    _transcript_page_url,
+)
 from config import MAX_MEMES_PER_REQUEST
 from youtube_client import VideoSubscription
+from youtube_transcript import TranscriptBundle
 
 
 class TestMemeBot:
@@ -127,6 +134,73 @@ class TestMemeCommands:
         """Test MemeCommands initialization."""
         assert cog.bot == bot
         assert cog.reddit_client == bot.reddit_client
+
+    def test_summary_sections_and_timestamps_are_readable(self):
+        sections = _summary_sections(
+            "# Learning Brief\n\n**Executive overview**\nA system at [00:01:05].\n\n---\n\n"
+            "**Core ideas and reasoning**\n- Useful detail."
+        )
+        assert sections == [
+            ("Executive overview", "A system at [00:01:05]."),
+            ("Core ideas and reasoning", "- Useful detail."),
+        ]
+        assert _link_timestamps(sections[0][1], "wAPDmc8e22U") == (
+            "A system at [1:05](https://youtu.be/wAPDmc8e22U?t=65)."
+        )
+
+    def test_transcript_page_url_uses_caption_worker_origin(self):
+        with patch("discord_bot.CAPTION_CACHE_URL", "https://captions.example/caption-cache"):
+            assert _transcript_page_url("wAPDmc8e22U") == (
+                "https://captions.example/transcript/wAPDmc8e22U"
+            )
+
+    @pytest.mark.asyncio
+    async def test_send_transcript_uses_plain_preview_and_copy_link(self, cog):
+        cog._fetch_and_cache_transcript = AsyncMock(return_value=TranscriptBundle(
+            video_id="wAPDmc8e22U",
+            title="Mobile transcript",
+            channel_name="Example",
+            language="en",
+            plain_text="Readable transcript text " * 100,
+            srt_text="1\n00:00:00,000 --> 00:00:01,000\nReadable transcript text",
+        ))
+        destination = AsyncMock()
+
+        await cog._send_transcript(destination, "wAPDmc8e22U")
+
+        cog._fetch_and_cache_transcript.assert_awaited_once_with(
+            "wAPDmc8e22U", cache_required=True
+        )
+        _, kwargs = destination.send.call_args
+        assert "files" not in kwargs
+        assert kwargs["view"].children[0].url.endswith("/transcript/wAPDmc8e22U")
+        assert len(destination.send.call_args.args[0]) < 2000
+        assert "copy it in one tap" in destination.send.call_args.args[0]
+
+    @pytest.mark.asyncio
+    async def test_summary_channel_link_is_handled_by_on_message(self, cog):
+        class Typing:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_args):
+                return False
+
+        message = Mock()
+        message.author.bot = False
+        message.channel.name = "summary"
+        message.channel.typing.return_value = Typing()
+        message.channel.send = AsyncMock()
+        message.content = "https://www.youtube.com/watch?v=wAPDmc8e22U"
+        message.to_reference.return_value = Mock()
+        message.reply = AsyncMock()
+        cog._video_summary = AsyncMock(return_value="**Executive overview**\nA detailed brief.")
+
+        await cog.on_message(message)
+
+        cog._video_summary.assert_awaited_once_with("wAPDmc8e22U")
+        message.channel.send.assert_awaited_once()
+        message.reply.assert_not_awaited()
     
     @pytest.mark.asyncio
     async def test_fetch_meme_with_keyword(self, cog, mock_context, mock_meme):
@@ -305,11 +379,11 @@ class TestMemeCommands:
     @pytest.mark.asyncio
     async def test_create_video_embed_and_button(self, cog):
         video = {
-            "video_id": "video123",
+            "video_id": "video123456",
             "title": "A useful AI video",
-            "url": "https://www.youtube.com/watch?v=video123",
+            "url": "https://www.youtube.com/watch?v=video123456",
             "published": "2026-07-31T12:00:00+00:00",
-            "thumbnail_url": "https://img.example/video123.jpg",
+            "thumbnail_url": "https://img.example/video123456.jpg",
         }
         subscription = VideoSubscription(
             youtube_channel_id="UC1234567890123456789012",
@@ -324,8 +398,17 @@ class TestMemeCommands:
         assert embed.title == "A useful AI video"
         assert embed.url == video["url"]
         assert embed.color.value == 0xFF0000
-        assert embed.image.url == "https://img.example/video123.jpg"
+        assert embed.image.url == "https://img.example/video123456.jpg"
+        assert [
+            child.item.label if hasattr(child, "item") else child.label
+            for child in view.children
+        ] == ["Watch", "Copy link", "Summarize", "Transcript", "Copy transcript"]
         assert view.children[0].url == video["url"]
+        assert view.children[1].custom_id == "link:video123456"
+        assert view.children[2].custom_id == "summary:video123456"
+        assert view.children[3].custom_id == "chat:video123456"
+        assert view.children[4].url.endswith("/transcript/video123456")
+
 
     @pytest.mark.asyncio
     async def test_add_youtube_channel_routes_to_everything_and_creator(self, cog):

@@ -1,17 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "discord-youtuber-tracker",
+  "name": "discord-youtube-transcripts",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-31",
   "compatibility_flags": ["nodejs_compat"],
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["* * * * *", "*/2 * * * *"]
+  },
+  "vars": {
+    "PUBLIC_TRANSCRIPT_ORIGIN": "https://discord-youtube-transcripts.kaiguy432.workers.dev"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "discord-youtuber-tracker",
-      "database_id": "86a598ff-0d94-43fb-9c71-569291fbdc7b",
+      "database_name": "discord-youtube-transcripts",
+      "database_id": "6bf847a7-a88d-4f98-82ff-4eb0d5b9273b",
       "migrations_dir": "migrations"
     }
   ]
