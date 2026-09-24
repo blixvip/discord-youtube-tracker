@@ -30,7 +30,7 @@ A Discord bot that watches YouTube creators, routes new uploads into organized D
 ## Setup
 
 ```bash
-git clone https://github.com/wasely/discord-youtube-tracker.git
+git clone https://github.com/blixvip/discord-youtube-tracker.git
 cd discord-youtube-tracker
 python -m venv .venv
 ```
