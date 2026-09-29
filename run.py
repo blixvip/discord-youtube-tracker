@@ -7,7 +7,7 @@ import asyncio
 import sys
 import os
 from discord_bot import main
-from colorama import init, Fore as f, Style as s
+from colorama import init, Fore as f
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
