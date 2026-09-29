@@ -1,5 +1,7 @@
 # Discord YouTube Tracker
 
+**Never miss an upload: every new video from your creators lands in Discord with its transcript and an AI summary one click away.**
+
 A Discord bot that watches YouTube creators, routes new uploads into organized Discord channels, and optionally fetches Reddit memes.
 
 ## Features
