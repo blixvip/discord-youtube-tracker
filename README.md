@@ -1,5 +1,7 @@
 # Discord YouTube Tracker
 
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/zEB4VjmfSb)
+
 **Never miss an upload: every new video from your creators lands in Discord with its transcript and an AI summary one click away.**
 
 A Discord bot that watches YouTube creators, routes new uploads into organized Discord channels, and optionally fetches Reddit memes.
@@ -181,6 +183,10 @@ The offline suites cover configuration, Reddit behavior, Discord commands, YouTu
 - `config.py` — environment and bot settings
 - `run.py` — application entry point
 - `docs/` — implementation research notes
+
+## Community
+
+💬 [Join the Discord](https://discord.gg/zEB4VjmfSb) for questions, help, feedback, and updates.
 
 ## License
 
