@@ -1,6 +1,6 @@
 # Discord YouTube Tracker
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/zEB4VjmfSb)
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/wJfHQXfEMM)
 
 **Never miss an upload: every new video from your creators lands in Discord with its transcript and an AI summary one click away.**
 
@@ -186,7 +186,9 @@ The offline suites cover configuration, Reddit behavior, Discord commands, YouTu
 
 ## Community
 
-💬 [Join the Discord](https://discord.gg/zEB4VjmfSb) for questions, help, feedback, and updates.
+**Want to send a PR? Join the [blix open source Discord](https://discord.gg/wJfHQXfEMM) first.** It's the one server for everyone contributing to any blixvip repo: questions, ideas, PR discussion, help, and release news.
+
+💬 [Join the Discord](https://discord.gg/wJfHQXfEMM) for questions, help, feedback, and updates.
 
 ## License
 

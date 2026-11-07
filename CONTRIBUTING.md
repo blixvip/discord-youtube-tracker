@@ -1,5 +1,7 @@
 # Contributing
 
+> 💬 **Before you open a PR, join the [blix open source Discord](https://discord.gg/wJfHQXfEMM).** It's the home for contributors across every blixvip repo: ask questions, run ideas by us, and talk through your PR.
+
 Open an issue before a large behavioral change. Keep credentials, Discord IDs, subscription state, generated transcripts, and Worker state out of commits.
 
 ## Local checks
