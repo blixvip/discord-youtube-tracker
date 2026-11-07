@@ -184,16 +184,24 @@ def _caption_url(base_url: str) -> str:
 
 def classify_transcript_failure(message: str) -> TranscriptProviderError:
     normalized = message.casefold()
-    if any(value in normalized for value in ("private", "removed", "deleted", "unavailable")):
-        return TranscriptProviderError(TranscriptFailureReason.PRIVATE_OR_DELETED, message, False)
-    if any(value in normalized for value in ("age", "region", "country", "restricted")):
-        return TranscriptProviderError(TranscriptFailureReason.RESTRICTED, message, False)
-    if any(value in normalized for value in ("429", "blocked", "too many requests")):
+    retry_hint = re.search(r"\b(?:temporarily|try again)\b", normalized) is not None
+
+    if re.search(r"\b(?:429|too many requests)\b", normalized):
         return TranscriptProviderError(TranscriptFailureReason.REQUEST_BLOCKED, message, True)
-    if any(value in normalized for value in ("disabled", "not allowed")):
+    if not retry_hint and re.search(r"\b(?:private|removed|deleted)\b", normalized):
+        return TranscriptProviderError(TranscriptFailureReason.PRIVATE_OR_DELETED, message, False)
+    if re.search(r"\b(?:confirm your age|age[- ]restricted)\b", normalized) or (
+        not retry_hint and re.search(r"\b(?:age|region|country|restricted)\b", normalized)
+    ):
+        return TranscriptProviderError(TranscriptFailureReason.RESTRICTED, message, False)
+    if re.search(r"\bblocked\b", normalized):
+        return TranscriptProviderError(TranscriptFailureReason.REQUEST_BLOCKED, message, True)
+    if not retry_hint and re.search(r"\b(?:disabled|not allowed)\b", normalized):
         return TranscriptProviderError(TranscriptFailureReason.CAPTIONS_DISABLED, message, False)
-    if any(value in normalized for value in ("yet", "processing", "no readable caption track")):
+    if re.search(r"\b(?:yet|processing|no readable caption track)\b", normalized):
         return TranscriptProviderError(TranscriptFailureReason.WAITING_FOR_CAPTIONS, message, True)
+    if not retry_hint and re.search(r"\bunavailable\b", normalized):
+        return TranscriptProviderError(TranscriptFailureReason.PRIVATE_OR_DELETED, message, False)
     return TranscriptProviderError(TranscriptFailureReason.UNKNOWN, message, True)
 
 
