@@ -48,6 +48,45 @@ def test_orders_preferred_creator_tracks_and_ignores_malformed_entries():
     assert [track["languageCode"] for track in tracks] == ["en", "es"]
 
 
+def test_prefers_regional_language_over_unpreferred_default():
+    player = {
+        "captions": {
+            "playerCaptionsTracklistRenderer": {
+                "captionTracks": [{"languageCode": "es"}, {"languageCode": "en-GB"}],
+                "defaultCaptionTrackIndex": 0,
+            }
+        }
+    }
+
+    tracks = YouTubeTranscriptClient._ordered_tracks(player, ("en",))
+
+    assert [track["languageCode"] for track in tracks] == ["en-GB", "es"]
+
+
+def test_orders_exact_and_regional_matches_by_language_preference():
+    player = {
+        "captions": {
+            "playerCaptionsTracklistRenderer": {
+                "captionTracks": [
+                    {"languageCode": "es"},
+                    {"languageCode": "en-CA", "kind": "asr"},
+                    {"languageCode": "en-GB"},
+                    {"languageCode": "en-US"},
+                    {"languageCode": "en-AU"},
+                    {"languageCode": "en"},
+                ],
+                "defaultCaptionTrackIndex": 3,
+            }
+        }
+    }
+
+    tracks = YouTubeTranscriptClient._ordered_tracks(player, ("EN", "es"))
+
+    assert [track["languageCode"] for track in tracks] == [
+        "en", "en-US", "en-GB", "en-AU", "en-CA", "es",
+    ]
+
+
 def test_classifies_retryable_and_permanent_transcript_failures():
     waiting = classify_transcript_failure("Captions are still processing")
     assert waiting.reason == TranscriptFailureReason.WAITING_FOR_CAPTIONS

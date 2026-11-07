@@ -241,13 +241,20 @@ class YouTubeTranscriptClient:
             for index, track in enumerate(tracks)
             if isinstance(track, dict)
         ]
+
+        def track_rank(item: tuple[int, Dict[str, Any]]) -> tuple[int, bool, bool, bool]:
+            index, track = item
+            language = str(track.get("languageCode", "")).casefold()
+            language_rank = language_order.get(language)
+            is_fallback = language_rank is None
+            if language_rank is None:
+                primary_language = language.split("-", 1)[0]
+                language_rank = language_order.get(primary_language, len(preferred_languages))
+            return language_rank, is_fallback, track.get("kind") == "asr", index != default_index
+
         return [track for _, track in sorted(
             valid_tracks,
-            key=lambda item: (
-                language_order.get(str(item[1].get("languageCode", "")).casefold(), len(language_order)),
-                item[1].get("kind") == "asr",
-                item[0] != default_index,
-            ),
+            key=track_rank,
         ) if isinstance(track, dict)]
 
     async def _load_first_track(
